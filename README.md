@@ -60,9 +60,9 @@ config.add_lv_with_columns_named("Exam_Grade", Mode.A, df, "grade")
 pls = Plspm(df, config, Scheme.PATH, 100, 0.00000001, False)
 pls.inner_model()
 ```
-4. Use EMM to discover interpretable subgroups where the structural model deviates from the global pattern. 
-    1. Select features to include in the descriptive space. In this work, we included all demographics and survey items that were not part of a latent construct.
-    2. Choose an appropriate depth (the maximum number of conditions that can describe a subgroup)
+4. Use EMM to discover interpretable subgroups where the structural model deviates from the global pattern: 
+    1. Select features to include in the descriptive space. In this work, we included all demographics and survey items that were not part of a latent construct;
+    2. Choose an appropriate depth (the maximum number of conditions that can describe a subgroup);
     3. Choose an appropriate quality function and set the desired parameters. We provide a choice of several quality functions in [SEM_model_target.py](PLS-SEM-extension/SEM_model_target.py). In this work, we employ `SEMQFEntropy`, which rewards (1) paths that are not statistically significant in the base model but become significant in the subgroup model, and (2) paths that are significant in both models but change sign between the base and subgroup models. Subgroup size is moderated by an entropy measure. 
 ```
 import pysubgroup as ps
@@ -77,7 +77,7 @@ task = ps.SubgroupDiscoveryTask (
     searchspace,
     result_set_size=5,
     depth=5,
-    qf=ps.SEMQFEntropy(config, weight_sig, weight_sign)) # default value for weight_sig and weight_sign is 1
+    qf=ps.SEMQFEntropy(config, weight_sig=1, weight_sign=1))
 result = ps.DFS().execute(task)
 result_df = result.to_dataframe()
 ```
