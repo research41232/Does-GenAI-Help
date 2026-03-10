@@ -1,5 +1,5 @@
 # Does-GenAI-Help
-<img width="1024" alt="graphical_abstract_git" src="https://github.com/user-attachments/assets/0f077217-aa27-459f-9743-108a402d5d2a" />
+<img width="991" height="718" alt="GraphicalAbstractSmallV3" src="https://github.com/user-attachments/assets/431fde21-c28d-49cb-9192-c11264ff8c60" />
 
 This repository is built for the paper
 *Why "Does GenAI Help?" Is the Wrong Question: Effects Change Sign Across Student Subgroups* .
