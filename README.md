@@ -24,3 +24,60 @@ Once installed:
 4. Move the downloaded files to the `pysubgroup` folder;
 5. You can now import the extended package with `import pysubgroup`.
 ## How To Use
+1. Define your constructs. All items belonging to a construct must share a common prefix and and be the same .Scale (if nonmetric). 
+2. Define your PLS-SEM configuration. This configuration will be the same for the global model and all discovered exceptional models, and must be specified using  the [plspm](https://pypi.org/project/plspm/) package. In this work, we define the following configuration:
+```
+import plspm.config as c
+from plspm.plspm import Plspm
+from plspm.scheme import Scheme
+from plspm.mode import Mode
+from plspm.scale import Scale
+
+# define model structure in terms of latent constructs
+structure = c.Structure()
+structure.add_path(["Embracing_GenAI"], ["GenAI_Skill", "Study_Aid_Use", "Improve_Use", "Generate_Use"])
+structure.add_path(["GenAI_Skill"], ["Study_Aid_Use", "Improve_Use", "Generate_Use"])
+structure.add_path(["Study_Aid_Use", "Improve_Use", "Generate_Use"], ["Perceived_Learning_Impact"])
+structure.add_path(["Study_Aid_Use", "Improve_Use", "Generate_Use"], ["Exam_Grade"])
+structure.add_path(["Perceived_Learning_Impact"], ["Exam_Grade"])
+
+config = c.Config(structure.path(), default_scale=Scale.NUM)
+
+# couple each latent construct with its respective items
+# all items corresponding to a construct must share a common prefix (e.g., "embracing_")
+# and be the same .Scale (if nonmetric).
+
+config.add_lv_with_columns_named("Embracing_GenAI", Mode.A, df, "embracing_")
+config.add_lv_with_columns_named("GenAI_Skill", Mode.A, df, "skill_")
+config.add_lv_with_columns_named("Study_Aid_Use", Mode.A, df, "study_aid_")
+config.add_lv_with_columns_named("Improve_Use", Mode.A, df, "improve_")
+config.add_lv_with_columns_named("Generate_Use", Mode.A, df, "generate_")
+config.add_lv_with_columns_named("Perceived_Learning_Impact", Mode.A, df, "impact_")
+config.add_lv_with_columns_named("Exam_Grade", Mode.A, df, "grade")
+```
+3. Fit and inspect the global PLS-SEM using:
+```
+pls = Plspm(df, config, Scheme.PATH, 100, 0.00000001, False)
+pls.inner_model()
+```
+4. Use EMM to discover interpretable subgroups where the structural model deviates from the global pattern. 
+    1. Select features to include in the descriptive space. In this work, we included all demographics and survey items that were not part of a latent construct.
+    2. Choose an appropriate depth (the maximum number of conditions that can describe a subgroup)
+    3. Choose an appropriate quality function and set the desired parameters. We provide a choice of several quality functions in [SEM_model_target.py](PLS-SEM-extension/SEM_model_target.py). In this work, we employ `SEMQFEntropy`, which rewards (1) paths that are not statistically significant in the base model but become significant in the subgroup model, and (2) paths that are significant in both models but change sign between the base and subgroup models. Subgroup size is moderated by an entropy measure. 
+```
+import pysubgroup as ps
+all_cols = df.columns.tolist()
+descriptive_features = ['Gender', 'Major', 'Age', ...] # list all desired descriptive features
+ignore = [col for col in all_cols if col not in descriptive_features]
+target = ps.SEMTarget(config)
+searchspace = ps.create_selectors(df, ignore=ignore)
+task = ps.SubgroupDiscoveryTask (
+    data,
+    target,
+    searchspace,
+    result_set_size=5,
+    depth=5,
+    qf=ps.SEMQFEntropy(config, weight_sig, weight_sign)) # default value for weight_sig and weight_sign is 1
+result = ps.DFS().execute(task)
+result_df = result.to_dataframe()
+```
